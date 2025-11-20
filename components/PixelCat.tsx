@@ -4,10 +4,11 @@ import { CatMood } from '../types';
 interface PixelCatProps {
   mood: CatMood;
   isJumping?: boolean;
+  isWalking?: boolean;
   direction?: number; // 1 for right, -1 for left
 }
 
-const PixelCat: React.FC<PixelCatProps> = ({ mood, isJumping = false, direction = 1 }) => {
+const PixelCat: React.FC<PixelCatProps> = ({ mood, isJumping = false, isWalking = false, direction = 1 }) => {
   // Simple SVG pixel art construction
   
   // Colors
@@ -22,6 +23,8 @@ const PixelCat: React.FC<PixelCatProps> = ({ mood, isJumping = false, direction 
   // Animation Classes
   const getAnimationClass = () => {
     if (isJumping) return "";
+    if (isWalking) return "animate-pixel-walk";
+    
     switch (mood) {
       case CatMood.EATING:
         return "animate-pixel-eat";

@@ -1,12 +1,14 @@
+
 import React from 'react';
 
 interface FoodItemProps {
   x: number;
-  y: number;
+  bottomPct: number; // Percentage from bottom
   visible: boolean;
+  scale: number;
 }
 
-const FoodItem: React.FC<FoodItemProps> = ({ x, y, visible }) => {
+const FoodItem: React.FC<FoodItemProps> = ({ x, bottomPct, visible, scale }) => {
   if (!visible) return null;
 
   // Pixel art fish colors
@@ -16,12 +18,12 @@ const FoodItem: React.FC<FoodItemProps> = ({ x, y, visible }) => {
 
   return (
     <div 
-      className="absolute z-0"
+      className="absolute z-0 pointer-events-none"
       style={{ 
         left: '50%', 
-        bottom: '0',
-        transform: `translate(calc(-50% + ${x}px), ${-y}px)`,
-        transition: y > 0 ? 'none' : 'transform 0.1s' // Snap when on ground, otherwise let animation handle it? Actually App handles Y
+        bottom: `${bottomPct}%`,
+        transform: `translate(calc(-50% + ${x}px), 0) scale(${scale})`,
+        transition: 'bottom 0.5s ease-out, transform 0.5s' 
       }}
     >
       <div className="animate-drop-bounce">

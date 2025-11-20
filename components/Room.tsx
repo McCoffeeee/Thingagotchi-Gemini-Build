@@ -17,7 +17,10 @@ const Room: React.FC<RoomProps> = ({ equipped }) => {
 
          {/* Decor: Center-Right on Wall */}
          {equipped[ItemCategory.DECOR] && (
-            <div className="absolute top-10 right-20 opacity-90 shadow-md">
+            <div 
+              className="absolute top-16 left-1/2 opacity-100 shadow-md transition-transform"
+              style={{ transform: 'translateX(calc(-50% + 200px))' }}
+            >
                 {renderItemVisual(equipped[ItemCategory.DECOR]!)}
             </div>
          )}
@@ -30,21 +33,27 @@ const Room: React.FC<RoomProps> = ({ equipped }) => {
 
           {/* Rug: Center Floor */}
           {equipped[ItemCategory.RUG] && (
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 opacity-90">
+            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 opacity-90 z-0">
                 {renderItemVisual(equipped[ItemCategory.RUG]!)}
             </div>
           )}
 
-          {/* Bed: Left Floor */}
+          {/* Bed: Left Floor (Centered at -280px) */}
           {equipped[ItemCategory.BED] && (
-            <div className="absolute bottom-8 left-10 opacity-100 drop-shadow-lg">
+            <div 
+              className="absolute bottom-12 left-1/2 opacity-100 drop-shadow-lg z-10 transition-transform"
+              style={{ transform: 'translateX(calc(-50% - 280px))' }}
+            >
                 {renderItemVisual(equipped[ItemCategory.BED]!)}
             </div>
           )}
 
-          {/* Plant: Right Floor */}
+          {/* Plant: Right Floor (Centered at +280px) */}
           {equipped[ItemCategory.PLANT] && (
-            <div className="absolute bottom-8 right-10 opacity-100 drop-shadow-lg">
+            <div 
+              className="absolute bottom-12 left-1/2 opacity-100 drop-shadow-lg z-20 transition-transform"
+              style={{ transform: 'translateX(calc(-50% + 280px))' }}
+            >
                  {renderItemVisual(equipped[ItemCategory.PLANT]!)}
             </div>
           )}

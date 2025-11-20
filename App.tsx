@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AppMode, CatMood, CatState, EquippedItems, ItemCategory } from './types';
 import { MAX_STAT, DECAY_RATE_MS, HUNGER_DECAY, HAPPINESS_DECAY, ENERGY_DECAY } from './constants';
 import StatsBar from './components/StatsBar';
@@ -13,20 +13,26 @@ import { generateCatThought } from './services/geminiService';
 
 interface Particle {
   id: number;
-  x: number; // relative to food center
-  y: number;
+  x: number; // relative to center
+  depth: number; // y pct
   tx: string; // translate x css var
   ty: string; // translate y css var
   color: string;
 }
+
+// Depth constants
+const FLOOR_MIN_PCT = 5; // Front of screen
+const FLOOR_MAX_PCT = 30; // Back near wall
+const SCALE_MIN = 1.2; // Front scale
+const SCALE_MAX = 0.8; // Back scale
 
 const App: React.FC = () => {
   // App State
   const [mode, setMode] = useState<AppMode>(AppMode.HOME);
   
   // Economy & Inventory State
-  const [coins, setCoins] = useState<number>(5); // Start with some coins
-  const [inventory, setInventory] = useState<string[]>(['bed_cardboard']); // Start with a box
+  const [coins, setCoins] = useState<number>(10); 
+  const [inventory, setInventory] = useState<string[]>(['bed_cardboard']); 
   const [equipped, setEquipped] = useState<EquippedItems>({
     [ItemCategory.BED]: 'bed_cardboard'
   });
@@ -44,12 +50,38 @@ const App: React.FC = () => {
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
   const [showShop, setShowShop] = useState<boolean>(false);
 
-  // Animation States
-  const [catX, setCatX] = useState<number>(0);
+  // Movement & Animation States
+  const [catPos, setCatPos] = useState<{ x: number; y: number }>({ x: 0, y: 15 }); // x: px offset, y: % from bottom
   const [catDirection, setCatDirection] = useState<number>(1);
   const [isHopping, setIsHopping] = useState<boolean>(false);
+  const [isWalking, setIsWalking] = useState<boolean>(false);
   const [food, setFood] = useState<{ visible: boolean; x: number; y: number }>({ visible: false, x: 0, y: 0 });
   const [particles, setParticles] = useState<Particle[]>([]);
+
+  // Helpers
+  const getScale = (yPct: number) => {
+    // Linear interpolation: yPct from MIN(5) to MAX(30) maps to Scale from MIN(1.2) to MAX(0.8)
+    const pct = (yPct - FLOOR_MIN_PCT) / (FLOOR_MAX_PCT - FLOOR_MIN_PCT);
+    const scale = SCALE_MIN - (pct * (SCALE_MIN - SCALE_MAX));
+    return Math.max(SCALE_MAX, Math.min(SCALE_MIN, scale));
+  };
+
+  // Calculate bed position based on equipped item
+  const getBedPosition = (bedId?: string) => {
+      // Base X matching Room.tsx positioning (-280px from center)
+      const baseX = -280;
+      
+      switch (bedId) {
+          case 'bed_royal':
+              return { x: baseX, y: 18 }; // Sit higher on throne
+          case 'bed_cardboard':
+          case 'bed_tent':
+              return { x: baseX, y: 15 }; // Sit slightly back inside
+          case 'bed_cushion':
+          default:
+              return { x: baseX, y: 14 }; // Sit on top
+      }
+  };
 
   // Timer for stats decay
   useEffect(() => {
@@ -57,10 +89,9 @@ const App: React.FC = () => {
 
     const timer = setInterval(() => {
       setStats(prev => {
-        // Warn if stats get critical
         const newHunger = Math.max(0, prev.hunger - HUNGER_DECAY);
         const newHappiness = Math.max(0, prev.happiness - HAPPINESS_DECAY);
-        const newEnergy = Math.max(0, prev.energy - (prev.energy > 20 ? ENERGY_DECAY : 0)); // Sleep protects energy
+        const newEnergy = Math.max(0, prev.energy - (prev.energy > 20 ? ENERGY_DECAY : 0));
         
         return {
           hunger: newHunger,
@@ -76,7 +107,7 @@ const App: React.FC = () => {
 
   // Determine mood based on stats
   useEffect(() => {
-    if (isAnimating) return; // Don't override animation moods
+    if (isAnimating) return;
 
     if (stats.energy < 20) {
       setMood(CatMood.SLEEPING);
@@ -89,27 +120,45 @@ const App: React.FC = () => {
     }
   }, [stats, isAnimating]);
 
-  // Generate thoughts periodically
+  // Idle Behavior: Thoughts & Random Movement
   useEffect(() => {
     if (mode === AppMode.GAME) return;
     if (isAnimating) return;
     if (showShop) return;
+    if (mood === CatMood.SLEEPING) return;
 
-    const shouldTalk = Math.random() > 0.9; // Less frequent
-    
-    if (shouldTalk && !showThought) {
-      const fetchThought = async () => {
-        const newThought = await generateCatThought(stats);
-        setThought(newThought);
-        setShowThought(true);
-        setTimeout(() => setShowThought(false), 4000);
-      };
-      fetchThought();
-    }
-  }, [stats.hunger, stats.happiness, mode, isAnimating, showThought, stats, showShop]);
+    const idleInterval = setInterval(() => {
+        const action = Math.random();
+        
+        // 20% chance to move somewhere
+        if (action < 0.2) {
+            const targetX = (Math.random() * 400) - 200; // -200 to 200 px
+            const targetY = FLOOR_MIN_PCT + Math.random() * (FLOOR_MAX_PCT - FLOOR_MIN_PCT);
+            
+            setCatDirection(targetX > catPos.x ? 1 : -1);
+            setIsWalking(true);
+            setCatPos({ x: targetX, y: targetY });
+            
+            setTimeout(() => {
+                setIsWalking(false);
+            }, 1500);
+        } 
+        // 10% chance to think
+        else if (action > 0.8 && !showThought) {
+            const fetchThought = async () => {
+                const newThought = await generateCatThought(stats);
+                setThought(newThought);
+                setShowThought(true);
+                setTimeout(() => setShowThought(false), 4000);
+            };
+            fetchThought();
+        }
+    }, 4000);
+
+    return () => clearInterval(idleInterval);
+  }, [stats, mode, isAnimating, showThought, showShop, mood, catPos]);
 
   const handlePet = () => {
-    // If doing an uninterruptible animation (like eating), ignore unless it's sleeping (which we can wake from)
     if (isAnimating && mood !== CatMood.SLEEPING) return;
 
     if (mood === CatMood.SLEEPING) {
@@ -121,7 +170,6 @@ const App: React.FC = () => {
       return;
     }
 
-    // Petting logic
     setIsHopping(true);
     setThought("❤️"); 
     setShowThought(true);
@@ -148,52 +196,54 @@ const App: React.FC = () => {
 
     setIsAnimating(true);
     
-    // 1. Decide where food drops
-    const randomOffset = Math.random() > 0.5 ? 150 : -150;
-    let foodTargetX = catX + randomOffset;
-    if (foodTargetX > 250) foodTargetX = 250;
-    if (foodTargetX < -250) foodTargetX = -250;
+    // 1. Decide where food drops (Random X and Random Depth Y)
+    const foodTargetX = (Math.random() * 300) - 150;
+    const foodTargetY = FLOOR_MIN_PCT + Math.random() * (FLOOR_MAX_PCT - FLOOR_MIN_PCT);
 
     // 2. Spawn Food
-    setFood({ visible: true, x: foodTargetX, y: 0 });
+    setFood({ visible: true, x: foodTargetX, y: foodTargetY });
 
     // 3. Move Cat to Food
+    const direction = foodTargetX > catPos.x ? 1 : -1;
+    const stopOffset = 40 * direction; // Stop slightly before
+    
+    setCatDirection(direction);
+    setIsWalking(true);
+    setCatPos({ x: foodTargetX - stopOffset, y: foodTargetY });
+
+    // 3b. Arrive at food
     setTimeout(() => {
-        const distance = foodTargetX - catX;
-        const direction = distance > 0 ? 1 : -1;
-        const targetCatX = foodTargetX - (60 * direction);
-        
-        setCatDirection(direction);
-        setCatX(targetCatX);
+        setIsWalking(false); 
+        setMood(CatMood.EATING);
         
         // 4. Start Eating
+        const eatInterval = setInterval(() => {
+            setStats(prev => ({ ...prev, hunger: Math.min(MAX_STAT, prev.hunger + 2) }));
+            // Pass correct depth
+            spawnCrumbs(foodTargetX, foodTargetY);
+        }, 200);
+
+        // 5. Finish Eating
         setTimeout(() => {
-            setMood(CatMood.EATING);
-            const eatInterval = setInterval(() => {
-                setStats(prev => ({ ...prev, hunger: Math.min(MAX_STAT, prev.hunger + 2) }));
-                spawnCrumbs(foodTargetX);
-            }, 200);
-
-            // 5. Finish Eating
+            clearInterval(eatInterval);
+            setFood({ visible: false, x: 0, y: 0 });
+            setMood(CatMood.HAPPY);
+            setThought("Yummy!");
+            setShowThought(true);
+            
+            // 6. Return to centerish (or stay)
             setTimeout(() => {
-                clearInterval(eatInterval);
-                setFood({ visible: false, x: 0, y: 0 });
-                setMood(CatMood.HAPPY);
-                setThought("Yummy!");
-                setShowThought(true);
-                
-                setTimeout(() => {
-                    setShowThought(false);
-                    setIsAnimating(false);
-                }, 1000);
+                setShowThought(false);
+                setMood(CatMood.NEUTRAL);
+                setIsAnimating(false);
+            }, 1000);
 
-            }, 2000);
+        }, 2000); // Duration of eating
 
-        }, 1000);
-    }, 400);
+    }, 1500); // Duration of walk
   };
 
-  const spawnCrumbs = (originX: number) => {
+  const spawnCrumbs = (originX: number, depthPct: number) => {
       const id = Date.now() + Math.random();
       const angle = Math.random() * Math.PI;
       const velocity = 50 + Math.random() * 50;
@@ -201,23 +251,57 @@ const App: React.FC = () => {
       const ty = (-Math.sin(angle) * velocity) + 'px';
       const color = Math.random() > 0.5 ? '#fbbf24' : '#60a5fa';
 
-      setParticles(prev => [...prev, { id, x: originX, y: 20, tx, ty, color }]);
+      setParticles(prev => [...prev, { id, x: originX, depth: depthPct, tx, ty, color }]);
       setTimeout(() => setParticles(prev => prev.filter(p => p.id !== id)), 800);
   };
 
   const handleSleep = () => {
+    if (mood === CatMood.SLEEPING) return;
+    
     setIsAnimating(true);
+    
+    const bedId = equipped[ItemCategory.BED];
+    const bedPos = getBedPosition(bedId);
+
+    if (bedId) {
+        // Walk to bed first
+        const direction = bedPos.x > catPos.x ? 1 : -1;
+        setCatDirection(direction);
+        setIsWalking(true);
+        setCatPos({ x: bedPos.x, y: bedPos.y });
+        
+        // Time to walk
+        setTimeout(() => {
+            setIsWalking(false);
+            startSleeping();
+        }, 1500);
+    } else {
+        // Sleep where you stand
+        startSleeping();
+    }
+  };
+
+  const startSleeping = () => {
     setMood(CatMood.SLEEPING);
     
-    // Move cat to bed if one exists? 
-    // For now, just sleep in place or maybe reset to 0 (center)
-    // setCatX(0);
-
-    setStats(prev => ({ ...prev, energy: Math.min(MAX_STAT, prev.energy + 30) }));
-    
-    setTimeout(() => {
-        setIsAnimating(false);
-    }, 3000);
+    // Restore energy logic
+    const sleepInterval = setInterval(() => {
+        setStats(prev => {
+            const newEnergy = Math.min(MAX_STAT, prev.energy + 5);
+            // Wake up if full
+            if (newEnergy >= 100) {
+                 clearInterval(sleepInterval);
+                 setTimeout(() => {
+                    setMood(CatMood.NEUTRAL);
+                    setIsAnimating(false);
+                    setThought("I'm awake!");
+                    setShowThought(true);
+                    setTimeout(() => setShowThought(false), 2000);
+                 }, 1000);
+            }
+            return { ...prev, energy: newEnergy };
+        });
+    }, 500);
   };
 
   const handlePlay = () => {
@@ -231,7 +315,6 @@ const App: React.FC = () => {
   };
 
   const handleGameOver = (score: number) => {
-    // Calculate coins earned: 1 coin per 100 points
     const coinsEarned = Math.floor(score / 100);
     setCoins(prev => prev + coinsEarned);
 
@@ -243,8 +326,6 @@ const App: React.FC = () => {
       hunger: Math.max(0, prev.hunger - 10)
     }));
   };
-
-  // --- Shop Handlers ---
 
   const handleBuyItem = (itemId: string, cost: number) => {
     if (coins >= cost && !inventory.includes(itemId)) {
@@ -267,6 +348,8 @@ const App: React.FC = () => {
       </div>
     );
   }
+
+  const currentScale = getScale(catPos.y);
 
   return (
     <div className="w-screen h-screen bg-gray-900 flex flex-col items-center justify-between p-6 text-white overflow-hidden font-sans select-none relative">
@@ -294,22 +377,27 @@ const App: React.FC = () => {
         {/* Room Background & Furniture */}
         <Room equipped={equipped} />
 
-        {/* Cat Area - Positioned absolutely within the room */}
-        {/* Adjusted from 35% to 20% to bring cat closer to floor center */}
-        <div className="absolute bottom-[20%] left-1/2 w-0 h-0 visible z-10">
+        {/* Cat Area & Dynamic Objects */}
+        <div className="absolute inset-0 pointer-events-none">
              
              {/* Food Item */}
-             <FoodItem x={food.x} y={food.y} visible={food.visible} />
+             <FoodItem 
+                x={food.x} 
+                bottomPct={food.y} 
+                visible={food.visible} 
+                scale={getScale(food.y)}
+             />
 
              {/* Particles */}
              {particles.map(p => (
                  <div 
                     key={p.id}
-                    className="absolute w-2 h-2 rounded-sm animate-crumb"
+                    className="absolute w-2 h-2 rounded-sm animate-crumb z-10"
                     style={{
                         backgroundColor: p.color,
-                        left: `calc(-50% + ${p.x}px)`,
-                        bottom: p.y,
+                        left: `calc(50% + ${p.x}px)`,
+                        bottom: `${p.depth}%`, 
+                        transform: `scale(${getScale(p.depth)})`, // Scale crumbs with depth
                         '--tx': p.tx,
                         '--ty': p.ty
                     } as React.CSSProperties}
@@ -318,23 +406,31 @@ const App: React.FC = () => {
 
              {/* Cat Container */}
              <div 
-                className="absolute bottom-0 flex flex-col items-center transition-transform duration-1000 ease-in-out"
+                className="absolute flex flex-col items-center pointer-events-auto"
                 style={{ 
-                    transform: `translateX(calc(-50% + ${catX}px))`,
-                    zIndex: 20
+                    left: '50%',
+                    bottom: `${catPos.y}%`,
+                    transform: `translateX(calc(-50% + ${catPos.x}px)) scale(${currentScale})`,
+                    zIndex: Math.floor(100 - catPos.y), // Depth sorting
+                    transition: 'bottom 1.5s ease-in-out, transform 1.5s ease-in-out'
                 }}
              >
                 <ChatBubble text={thought} visible={showThought} />
                 
                 <div 
                     onClick={handlePet}
-                    className={mood === CatMood.SLEEPING ? 'opacity-90' : 'cursor-pointer'}
+                    className={`relative ${mood === CatMood.SLEEPING ? 'opacity-90' : 'cursor-pointer'}`}
                 >
-                    <PixelCat mood={mood} direction={catDirection} isJumping={isHopping} />
+                    <PixelCat 
+                        mood={mood} 
+                        direction={catDirection} 
+                        isJumping={isHopping}
+                        isWalking={isWalking}
+                    />
+                    
+                    {/* Shadow - Pinned to bottom of feet */}
+                    <div className="absolute bottom-[30px] left-1/2 transform -translate-x-1/2 w-24 h-3 bg-black/40 rounded-[100%] blur-sm z-[-1]" />
                 </div>
-                
-                {/* Shadow */}
-                <div className="w-24 h-3 bg-black/40 rounded-[100%] mt-[-10px] blur-sm z-[-1]" />
              </div>
         </div>
 

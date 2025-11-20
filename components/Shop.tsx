@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ITEMS, renderItemVisual } from '../data/items';
+import { ITEMS, renderShopItemVisual } from '../data/items';
 import { EquippedItems } from '../types';
 
 interface ShopProps {
@@ -18,7 +18,7 @@ const Shop: React.FC<ShopProps> = ({ coins, inventory, equipped, onClose, onBuy,
   const isEquipped = (id: string, cat: any) => equipped[cat] === id;
 
   return (
-    <div className="absolute inset-0 z-50 bg-gray-900/95 backdrop-blur-sm flex flex-col items-center justify-center p-6">
+    <div className="absolute inset-0 z-[200] bg-gray-900/95 backdrop-blur-sm flex flex-col items-center justify-center p-6">
       
       <div className="w-full max-w-4xl bg-[#1a1b26] border-4 border-gray-700 rounded-xl shadow-2xl flex flex-col h-[80vh]">
         
@@ -50,8 +50,8 @@ const Shop: React.FC<ShopProps> = ({ coins, inventory, equipped, onClose, onBuy,
               }`}
             >
               {/* Preview */}
-              <div className="h-20 flex items-center justify-center mb-4 scale-150">
-                {renderItemVisual(item.id)}
+              <div className="w-24 h-24 flex items-center justify-center mb-2">
+                {renderShopItemVisual(item.id)}
               </div>
 
               <div className="text-center mb-3 w-full">
