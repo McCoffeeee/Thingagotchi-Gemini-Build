@@ -47,6 +47,7 @@ const App: React.FC = () => {
   // Animation States
   const [catX, setCatX] = useState<number>(0);
   const [catDirection, setCatDirection] = useState<number>(1);
+  const [isHopping, setIsHopping] = useState<boolean>(false);
   const [food, setFood] = useState<{ visible: boolean; x: number; y: number }>({ visible: false, x: 0, y: 0 });
   const [particles, setParticles] = useState<Particle[]>([]);
 
@@ -106,6 +107,35 @@ const App: React.FC = () => {
       fetchThought();
     }
   }, [stats.hunger, stats.happiness, mode, isAnimating, showThought, stats, showShop]);
+
+  const handlePet = () => {
+    // If doing an uninterruptible animation (like eating), ignore unless it's sleeping (which we can wake from)
+    if (isAnimating && mood !== CatMood.SLEEPING) return;
+
+    if (mood === CatMood.SLEEPING) {
+      setIsAnimating(false);
+      setMood(CatMood.NEUTRAL);
+      setThought("Yawn...");
+      setShowThought(true);
+      setTimeout(() => setShowThought(false), 2000);
+      return;
+    }
+
+    // Petting logic
+    setIsHopping(true);
+    setThought("❤️"); 
+    setShowThought(true);
+    
+    setStats(prev => ({
+      ...prev,
+      happiness: Math.min(MAX_STAT, prev.happiness + 5)
+    }));
+
+    setTimeout(() => {
+      setIsHopping(false);
+      setShowThought(false);
+    }, 600);
+  };
 
   const handleFeed = () => {
     if (stats.hunger >= 100) {
@@ -297,19 +327,10 @@ const App: React.FC = () => {
                 <ChatBubble text={thought} visible={showThought} />
                 
                 <div 
-                    onClick={() => {
-                        if(mood === CatMood.SLEEPING) {
-                            setIsAnimating(false); 
-                            setMood(CatMood.NEUTRAL);
-                        } else {
-                            setThought("Meow!");
-                            setShowThought(true);
-                            setTimeout(() => setShowThought(false), 2000);
-                        }
-                    }}
+                    onClick={handlePet}
                     className={mood === CatMood.SLEEPING ? 'opacity-90' : 'cursor-pointer'}
                 >
-                    <PixelCat mood={mood} direction={catDirection} />
+                    <PixelCat mood={mood} direction={catDirection} isJumping={isHopping} />
                 </div>
                 
                 {/* Shadow */}

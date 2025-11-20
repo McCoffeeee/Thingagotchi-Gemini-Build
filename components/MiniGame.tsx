@@ -65,6 +65,16 @@ const CLOUD_SPRITE = [
     [0,1,1,1,0,0,1,1,0,0],
 ];
 
+const CLOUD_SPRITE_BIG = [
+    [0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0],
+    [0,0,1,1,1,1,1,0,0,0,0,1,1,1,0,0],
+    [0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,0,0,0,0,0,1,0,0,0,0],
+];
+
 // Color Palettes
 const PALETTES = {
   CAT: { 1: '#fbbf24', 2: '#b45309', 3: '#1e293b' },
@@ -201,11 +211,20 @@ const MiniGame: React.FC<MiniGameProps> = ({ onGameOver, onExit }) => {
     }
 
     // Spawn Clouds
-    if (state.frameCount % 120 === 0) {
+    if (state.frameCount % 180 === 0) {
         state.clouds.push({
             x: canvas.width,
             y: Math.random() * 150 + 20, // Sky area
             speed: (Math.random() * 1 + 0.5) // Slower than ground
+        });
+    }
+
+    // Spawn Big Clouds
+    if (state.frameCount % 146 === 0) {
+        state.clouds.push({
+            x: canvas.width,
+            y: Math.random() * 150 + 20, // Sky area
+            speed: (Math.random() * 1 + 0.3) // Slower than ground
         });
     }
 
@@ -299,6 +318,13 @@ const MiniGame: React.FC<MiniGameProps> = ({ onGameOver, onExit }) => {
     ctx.globalAlpha = 0.5;
     state.clouds.forEach(cloud => {
         drawPixelSprite(ctx, CLOUD_SPRITE, cloud.x, cloud.y, PALETTES.CLOUD, SCALE);
+    });
+    ctx.globalAlpha = 1.0;
+
+    //Big Clouds
+    ctx.globalAlpha = 0.5;
+    state.clouds.forEach(cloud => {
+        drawPixelSprite(ctx, CLOUD_SPRITE_BIG, cloud.x, cloud.y, PALETTES.CLOUD, SCALE);
     });
     ctx.globalAlpha = 1.0;
 
