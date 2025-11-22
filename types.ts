@@ -26,6 +26,7 @@ export interface ChatMessage {
 }
 
 export enum ItemCategory {
+  SKIN = 'SKIN',
   WALLPAPER = 'WALLPAPER',
   FLOOR = 'FLOOR',
   BED = 'BED',

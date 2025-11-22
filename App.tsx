@@ -32,9 +32,20 @@ const App: React.FC = () => {
   
   // Economy & Inventory State
   const [coins, setCoins] = useState<number>(10); 
-  const [inventory, setInventory] = useState<string[]>(['bed_cardboard']); 
+  
+  // Initialize with default items for Room and Skin
+  const [inventory, setInventory] = useState<string[]>([
+      'bed_cardboard', 
+      'skin_default', 
+      'wall_default', 
+      'floor_default'
+  ]); 
+  
   const [equipped, setEquipped] = useState<EquippedItems>({
-    [ItemCategory.BED]: 'bed_cardboard'
+    [ItemCategory.BED]: 'bed_cardboard',
+    [ItemCategory.SKIN]: 'skin_default',
+    [ItemCategory.WALLPAPER]: 'wall_default',
+    [ItemCategory.FLOOR]: 'floor_default'
   });
 
   const [stats, setStats] = useState<CatState>({
@@ -426,6 +437,7 @@ const App: React.FC = () => {
                         direction={catDirection} 
                         isJumping={isHopping}
                         isWalking={isWalking}
+                        skinId={equipped[ItemCategory.SKIN]}
                     />
                     
                     {/* Shadow - Pinned to bottom of feet */}

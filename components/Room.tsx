@@ -1,19 +1,36 @@
 
 import React from 'react';
 import { EquippedItems, ItemCategory } from '../types';
-import { renderItemVisual } from '../data/items';
+import { renderItemVisual, ROOM_STYLES } from '../data/items';
 
 interface RoomProps {
   equipped: EquippedItems;
 }
 
 const Room: React.FC<RoomProps> = ({ equipped }) => {
+  
+  const wallId = equipped[ItemCategory.WALLPAPER] || 'wall_default';
+  const floorId = equipped[ItemCategory.FLOOR] || 'floor_default';
+
+  const wallStyle = ROOM_STYLES[wallId] || ROOM_STYLES['wall_default'];
+  const floorStyle = ROOM_STYLES[floorId] || ROOM_STYLES['floor_default'];
+
   return (
     <div className="absolute inset-0 z-0 w-full h-full overflow-hidden pointer-events-none">
       {/* Wall (Top 65%) */}
-      <div className="absolute top-0 left-0 w-full h-[65%] bg-[#334155] border-b-4 border-black/20">
+      <div 
+        className="absolute top-0 left-0 w-full h-[65%] border-b-4 border-black/20"
+        style={{ backgroundColor: wallStyle.bg }}
+      >
          {/* Pattern on wall */}
-         <div className="w-full h-full opacity-5" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+         <div 
+            className="w-full h-full" 
+            style={{ 
+                backgroundImage: wallStyle.pattern, 
+                backgroundSize: wallStyle.size || 'auto',
+                opacity: wallStyle.opacity 
+            }} 
+         />
 
          {/* Decor: Center-Right on Wall */}
          {equipped[ItemCategory.DECOR] && (
@@ -27,9 +44,19 @@ const Room: React.FC<RoomProps> = ({ equipped }) => {
       </div>
 
       {/* Floor (Bottom 35%) */}
-      <div className="absolute bottom-0 left-0 w-full h-[35%] bg-[#475569]">
-          {/* Floorboards */}
-          <div className="w-full h-full opacity-10" style={{ backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 48px, #000 48px, #000 50px)' }}></div>
+      <div 
+        className="absolute bottom-0 left-0 w-full h-[35%]"
+        style={{ backgroundColor: floorStyle.bg }}
+      >
+          {/* Floor Pattern */}
+          <div 
+             className="w-full h-full" 
+             style={{ 
+                backgroundImage: floorStyle.pattern, 
+                backgroundSize: floorStyle.size || 'auto',
+                opacity: floorStyle.opacity 
+             }} 
+          />
 
           {/* Rug: Center Floor */}
           {equipped[ItemCategory.RUG] && (

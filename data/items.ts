@@ -2,25 +2,72 @@
 import React from 'react';
 import { ItemCategory, ShopItem } from '../types';
 
+// --- DEFINITIONS ---
+
+export const SKIN_DEFINITIONS: Record<string, { body: string; dark: string; eye: string; cheek: string; type: 'standard' | 'pikachu' }> = {
+  'skin_default': { body: "#fbbf24", dark: "#b45309", eye: "#1e293b", cheek: "#f472b6", type: 'standard' }, // Orange
+  'skin_black': { body: "#1f2937", dark: "#000000", eye: "#fcd34d", cheek: "#4b5563", type: 'standard' }, // Black / Yellow Eye
+  'skin_white': { body: "#f3f4f6", dark: "#d1d5db", eye: "#3b82f6", cheek: "#fca5a5", type: 'standard' }, // White / Blue Eye
+  'skin_pink': { body: "#fbcfe8", dark: "#db2777", eye: "#831843", cheek: "#fce7f3", type: 'standard' }, // Pink
+  'skin_pikachu': { body: "#facc15", dark: "#854d0e", eye: "#000000", cheek: "#ef4444", type: 'pikachu' }, // Pika
+};
+
+export const ROOM_STYLES: Record<string, { bg: string; pattern: string; size?: string; opacity: number }> = {
+  // Walls
+  'wall_default': { bg: '#334155', pattern: 'radial-gradient(#fff 1px, transparent 1px)', size: '20px 20px', opacity: 0.05 },
+  'wall_brick': { bg: '#7f1d1d', pattern: 'repeating-linear-gradient(45deg, #991b1b 0, #991b1b 10px, transparent 10px, transparent 20px)', size: 'auto', opacity: 1 },
+  'wall_wood': { bg: '#78350f', pattern: 'repeating-linear-gradient(90deg, #451a03 0, #451a03 2px, transparent 2px, transparent 20px)', size: 'auto', opacity: 0.5 },
+  'wall_clouds': { bg: '#60a5fa', pattern: 'radial-gradient(#fff 4px, transparent 4px)', size: '40px 40px', opacity: 0.4 },
+  'wall_space': { bg: '#1e1b4b', pattern: 'radial-gradient(#fff 1px, transparent 1px)', size: '50px 50px', opacity: 0.8 },
+
+  // Floors
+  'floor_default': { bg: '#475569', pattern: 'repeating-linear-gradient(90deg, transparent, transparent 48px, #000 48px, #000 50px)', size: 'auto', opacity: 0.1 },
+  'floor_checkered': { bg: '#e2e8f0', pattern: 'repeating-linear-gradient(45deg, #475569 25%, transparent 25%, transparent 75%, #475569 75%, #475569), repeating-linear-gradient(45deg, #475569 25%, transparent 25%, transparent 75%, #475569 75%, #475569)', size: '40px 40px', opacity: 0.2 },
+  'floor_wood': { bg: '#d97706', pattern: 'repeating-linear-gradient(0deg, transparent, transparent 10px, #92400e 10px, #92400e 11px)', size: 'auto', opacity: 0.5 },
+  'floor_grass': { bg: '#4ade80', pattern: 'radial-gradient(#166534 2px, transparent 2px)', size: '10px 10px', opacity: 0.3 },
+};
+
+// --- ITEMS ---
+
 export const ITEMS: ShopItem[] = [
-  // --- DECOR (Wall) ---
+  // SKINS
+  { id: 'skin_default', name: 'Orange Tabby', cost: 0, category: ItemCategory.SKIN, description: 'The classic look.' },
+  { id: 'skin_black', name: 'Void Cat', cost: 20, category: ItemCategory.SKIN, description: 'Stares back at you.' },
+  { id: 'skin_white', name: 'Cloud Cat', cost: 20, category: ItemCategory.SKIN, description: 'Soft and fluffy.' },
+  { id: 'skin_pink', name: 'Pinky', cost: 30, category: ItemCategory.SKIN, description: 'Magical.' },
+  { id: 'skin_pikachu', name: 'Electric Mouse', cost: 100, category: ItemCategory.SKIN, description: 'Shockingly cute.' },
+
+  // WALLPAPERS
+  { id: 'wall_default', name: 'Grey Paint', cost: 0, category: ItemCategory.WALLPAPER, description: 'Basic wall.' },
+  { id: 'wall_brick', name: 'Brick Wall', cost: 10, category: ItemCategory.WALLPAPER, description: 'Industrial vibe.' },
+  { id: 'wall_wood', name: 'Wood Paneling', cost: 15, category: ItemCategory.WALLPAPER, description: 'Cozy cabin.' },
+  { id: 'wall_clouds', name: 'Sky Wall', cost: 20, category: ItemCategory.WALLPAPER, description: 'Dreamy.' },
+  { id: 'wall_space', name: 'Space Wall', cost: 50, category: ItemCategory.WALLPAPER, description: 'Far out.' },
+
+  // FLOORS
+  { id: 'floor_default', name: 'Grey Tiles', cost: 0, category: ItemCategory.FLOOR, description: 'Basic floor.' },
+  { id: 'floor_wood', name: 'Hardwood', cost: 15, category: ItemCategory.FLOOR, description: 'Classic finish.' },
+  { id: 'floor_checkered', name: 'Checkered', cost: 20, category: ItemCategory.FLOOR, description: 'Retro diner style.' },
+  { id: 'floor_grass', name: 'Indoor Grass', cost: 25, category: ItemCategory.FLOOR, description: 'Touch grass inside.' },
+
+  // DECOR (Wall)
   { id: 'poster_fish', name: 'Fish Poster', cost: 1, category: ItemCategory.DECOR, description: 'A boring picture of a fish.' },
   { id: 'window_basic', name: 'Sunny Window', cost: 5, category: ItemCategory.DECOR, description: 'Let some light in.' },
   { id: 'poster_cool', name: 'Neon Sign', cost: 15, category: ItemCategory.DECOR, description: 'Buzzing slightly.' },
   { id: 'decor_painting', name: 'Landscape', cost: 25, category: ItemCategory.DECOR, description: 'A nice view.' },
 
-  // --- BED (Floor Left) ---
-  { id: 'bed_cardboard', name: 'Cardboard Box', cost: 2, category: ItemCategory.BED, description: 'Cats actually love this.' },
+  // BED (Floor Left)
+  { id: 'bed_cardboard', name: 'Cardboard Box', cost: 0, category: ItemCategory.BED, description: 'Cats actually love this.' },
   { id: 'bed_cushion', name: 'Blue Cushion', cost: 8, category: ItemCategory.BED, description: 'Soft and comfy.' },
   { id: 'bed_tent', name: 'Cat Tent', cost: 15, category: ItemCategory.BED, description: 'A private hideout.' },
   { id: 'bed_royal', name: 'Royal Throne', cost: 50, category: ItemCategory.BED, description: 'Fit for a king.' },
 
-  // --- RUG (Floor Center) ---
+  // RUG (Floor Center)
   { id: 'rug_welcome', name: 'Welcome Mat', cost: 3, category: ItemCategory.RUG, description: 'Wipe your paws.' },
   { id: 'rug_round', name: 'Round Rug', cost: 8, category: ItemCategory.RUG, description: 'Soft on the beans.' },
   { id: 'rug_persian', name: 'Fancy Rug', cost: 12, category: ItemCategory.RUG, description: 'Really ties the room together.' },
 
-  // --- PLANT (Floor Right) ---
+  // PLANT (Floor Right)
   { id: 'plant_potted', name: 'Potted Plant', cost: 4, category: ItemCategory.PLANT, description: 'Please do not eat.' },
   { id: 'plant_cactus', name: 'Cactus', cost: 10, category: ItemCategory.PLANT, description: 'Spiky friend.' },
   { id: 'plant_tree', name: 'Cat Tree', cost: 20, category: ItemCategory.PLANT, description: 'Scratch heaven.' },
@@ -223,6 +270,34 @@ export const renderItemVisual = (itemId: string) => {
 
 // For Shop Icon (Responsive, fits container)
 export const renderShopItemVisual = (itemId: string) => {
+  // Handle Skins separately for preview
+  if (SKIN_DEFINITIONS[itemId]) {
+    const s = SKIN_DEFINITIONS[itemId];
+    return React.createElement('svg', { width: "100%", height: "100%", viewBox: "0 0 16 16" },
+      React.createElement('rect', { x: 2, y: 3, width: 8, height: 8, fill: s.body }),
+      React.createElement('rect', { x: 2, y: 1, width: 1, height: 1, fill: s.dark }),
+      React.createElement('rect', { x: 9, y: 2, width: 1, height: 1, fill: s.dark }),
+      React.createElement('rect', { x: 3, y: 5, width: 1, height: 2, fill: s.eye }),
+      React.createElement('rect', { x: 8, y: 5, width: 1, height: 2, fill: s.eye }),
+      React.createElement('rect', { x: 2, y: 7, width: 1, height: 1, fill: s.cheek }),
+      React.createElement('rect', { x: 9, y: 7, width: 1, height: 1, fill: s.cheek })
+    );
+  }
+
+  // Handle Room Styles for preview
+  if (ROOM_STYLES[itemId]) {
+     const st = ROOM_STYLES[itemId];
+     return React.createElement('div', { 
+       style: { 
+           width: '100%', height: '100%', 
+           backgroundColor: st.bg, 
+           backgroundImage: st.pattern, 
+           backgroundSize: st.size || 'auto',
+           borderRadius: '8px'
+       } 
+     });
+  }
+
   const def = getVisualDef(itemId);
   if (!def) return null;
 

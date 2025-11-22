@@ -1,21 +1,22 @@
+
 import React from 'react';
 import { CatMood } from '../types';
+import { SKIN_DEFINITIONS } from '../data/items';
 
 interface PixelCatProps {
   mood: CatMood;
   isJumping?: boolean;
   isWalking?: boolean;
   direction?: number; // 1 for right, -1 for left
+  skinId?: string;
 }
 
-const PixelCat: React.FC<PixelCatProps> = ({ mood, isJumping = false, isWalking = false, direction = 1 }) => {
+const PixelCat: React.FC<PixelCatProps> = ({ mood, isJumping = false, isWalking = false, direction = 1, skinId = 'skin_default' }) => {
   // Simple SVG pixel art construction
   
-  // Colors
-  const bodyColor = "#fbbf24"; // Amber-400
-  const darkColor = "#b45309"; // Amber-700
-  const eyeColor = "#1e293b"; // Slate-800
-  const cheekColor = "#f472b6"; // Pink-400
+  // Resolve Skin Colors
+  const skin = SKIN_DEFINITIONS[skinId] || SKIN_DEFINITIONS['skin_default'];
+  const { body: bodyColor, dark: darkColor, eye: eyeColor, cheek: cheekColor, type: skinType } = skin;
 
   // Offset for jumping animation
   const jumpOffset = isJumping ? -20 : 0;
@@ -89,6 +90,30 @@ const PixelCat: React.FC<PixelCatProps> = ({ mood, isJumping = false, isWalking 
     }
   };
 
+  const renderTail = () => {
+    if (skinType === 'pikachu') {
+      // Lightning Tail
+      return (
+        <g>
+          <rect x="11" y="8" width="1" height="1" fill={darkColor} />
+          <rect x="12" y="7" width="1" height="1" fill={darkColor} />
+          <rect x="13" y="6" width="1" height="1" fill={darkColor} />
+          <rect x="14" y="5" width="1" height="1" fill={darkColor} />
+          <rect x="12" y="8" width="1" height="1" fill={darkColor} />
+          <rect x="11" y="9" width="1" height="1" fill={darkColor} />
+        </g>
+      );
+    }
+    // Standard Tail
+    return (
+      <g>
+        <rect x="11" y="8" width="1" height="1" fill={darkColor} />
+        <rect x="12" y="7" width="1" height="2" fill={darkColor} />
+        <rect x="13" y="6" width="1" height="2" fill={darkColor} />
+      </g>
+    );
+  };
+
   return (
     <div className="relative">
       {/* Zzz Animation for Sleeping */}
@@ -109,10 +134,8 @@ const PixelCat: React.FC<PixelCatProps> = ({ mood, isJumping = false, isWalking 
         }}
       >
         <g shapeRendering="crispEdges">
-          {/* Tail - Wags slightly in idle if we wanted, but sticking to body bounce */}
-          <rect x="11" y="8" width="1" height="1" fill={darkColor} />
-          <rect x="12" y="7" width="1" height="2" fill={darkColor} />
-          <rect x="13" y="6" width="1" height="2" fill={darkColor} />
+          
+          {renderTail()}
 
           {/* Ears */}
           <rect x="2" y="1" width="1" height="1" fill={darkColor} />
